@@ -1,0 +1,39 @@
+{% extends 'Home/home.html' %}
+{% block content %}
+{% load static %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<form action="" method="post" enctype="multipart/form-data" class="container">
+    {% csrf_token %}
+    <div class="row">
+      <div class="mb-3 col-sm-4">
+        <label for="exampleFormControlInput1" class="form-label">Title</label>
+        <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="Title" name="name" value="{{data.name}}" >
+      </div>        
+      
+      <div class="mb-3 col-sm-4">
+        <label for="exampleFormControlInput1" class="form-label">Image</label>
+        <input type="file" class="form-control" id="exampleFormControlInput1" placeholder="Title" name="image" > <span>{{data.image.url}}</span>
+      </div>
+
+
+      <div class="mb-3 col-sm-8">
+        <label for="exampleFormControlTextarea1" class="form-label">Description</label>
+        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="description">{{data.description}}</textarea> 
+      </div>
+
+      <div class="col-sm-6"></div>
+      <div class="col-sm-6">
+      <button type="submit" class="btn btn-dark" style="padding: 0.7rem;">Submit</button>
+    </div>
+      {{form.media}}
+    </div>
+</form>
+
+
+{% endblock content %}
