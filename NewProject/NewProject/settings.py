@@ -30,6 +30,7 @@ DEBUG = True
 CSRF_TRUSTED_ORIGINS = [
     'https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev',
 ]
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',    'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,9 +52,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Home',
     'Blogs',
+    'Website',
     'rest_framework',
+    'corsheaders',
 ]
 
+SESSION_COOKIE_AGE = 28800
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://3000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev",
+    "https://9000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev",
+    "http://localhost:3000",
+]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -62,6 +75,28 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with'
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'OPTIONS'
 ]
 
 ROOT_URLCONF = 'NewProject.urls'
