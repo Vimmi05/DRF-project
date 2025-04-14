@@ -76,3 +76,4 @@ def deleteStudentApiView(request, id):
         "status": "Successfully Deleted"
     }, status=200)
     print("student : ", student)
+

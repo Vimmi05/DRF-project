@@ -3,5 +3,8 @@ from Website import views
 
 urlpatterns = [
     path('', views.Website, name="website"),
-    path('GetTask/', views.GetTask, name="get_task")
-]
+    path('CreateTask/', views.CreateTask, name="create_task"),
+    path('GetTask/', views.GetTask, name="get_task"),
+    path('UpdateTask/<int:id>/', views.UpdateTask, name="update_task"),
+    path('Deletetask/<int:id>/', views.DeleteTask, name="delete_task")
+]   
