@@ -1,6 +1,45 @@
 'use client'
 import { error } from 'console';
 import React, { useState, useEffect } from 'react'
+import LoginForm from './login/page';
+
+const handleLogin = async (username, password) => {
+  setIsLoggingIn(true); // Start loading
+  setLoginError(null);  // Clear previous errors
+  try {
+      const response = await fetch('YOUR_API_TOKEN_URL', { /* ... */ });
+      // ... (rest of your existing login logic) ...
+      if (!response.ok) {
+           const errorText = await response.text(); // Get error details if possible
+           throw new Error(`Login failed: ${response.status} ${errorText || ''}`);
+      }
+      const tokens = await response.json();
+      localStorage.setItem('accessToken', tokens.access);
+      localStorage.setItem('refreshToken', tokens.refresh);
+      console.log('Login successful!');
+      // --- Trigger state update to reflect logged-in status ---
+      // For example, set an isLoggedIn state: setIsLoggedIn(true);
+      fetchData(); // Fetch data after successful login
+  } catch (error) {
+      console.error('Error during login:', error);
+      setLoginError(error.message); // Set error message to display
+      // --- Re-throw the error so the LoginForm can catch it too ---
+      throw error;
+  } finally {
+      setIsLoggingIn(false); // Stop loading regardless of outcome
+  }
+};
+const getAuthHeaders = () => {
+  const accessToken = localStorage.getItem('accessToken');
+  if(!accessToken){
+    console.warn("No access token found");
+    return null;
+  }
+  return{
+    'Content-type':'application/json',
+    'Authorization': `Bearer ${accessToken}`
+  };
+};
 
 export default function Home() {
   const [data, setData] = useState([]);
@@ -8,15 +47,30 @@ export default function Home() {
   const [editId, setEditId] = useState(null);
 
   const fetchData = async () => {
-    const response = await fetch('https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/GetTask/')
+    const headers = getAuthHeaders();
+    if(!headers) return; // dont fetch if not logged in
+    try{
+    const response = await fetch('https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/GetTask/',{
+      method: "GET",
+      headers: headers,
+    });
+
     if (!response.ok) {
-      console.log('HTTP Error')
-    } else {
+      console.log('HTTP Error fetching data:', response.status);
+    
+    if( response.status === 401){
+      console.log("Token might be expired, attempt refresh?");//refreshToken
+    }
+    throw new Error('HTTP error! status: ${response.status}');
+  } else {
       const result = await response.json()
       console.log('Running : ', result)
       setData(result.data); //data from backend
     }
+  } catch(error){
+    console.error("Failed to fetch data:", error);
   }
+  };
 
   useEffect(() => {
     fetchData()
@@ -25,10 +79,10 @@ export default function Home() {
   console.log("Value : ", task)
   const createOrUpdateRecord = async (e) => {
     e.preventDefault();
-    const data = {
-      task : task
-    }
-    try{
+    const headers = getAuthHeaders();
+  if (!headers) return; // Don't proceed if not logged in
+  const payload = { task : task};
+
       let url = 'https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/CreateTask/';
       let method = 'POST'
 
@@ -36,27 +90,26 @@ export default function Home() {
         url = `https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/UpdateTask/${editId}/`
         method = 'PUT'
       }
+      try{
       const response = await fetch('url', {
         method: method,
-        headers: {
-          "Content-Type":"application/json",
-        },
-        body: JSON.stringify(data)
-      })
+        headers: headers,
+        body: JSON.stringify(payload)
+      });
+
       if (response.ok){
         const res = await response.json()
         console.log("Response : ", res)
         setTask('')
+        setEditId(null);
         fetchData();
       }else{
-        console.log("Error : ")
+        console.error("Error creating/updating record:", response.status);
       }
-
-    }
-    catch(error){
+    } catch(error){
       console.log("Error : ", error)
     }
-  }
+  };
 
 
   const handleEdit = (record) => {
@@ -65,16 +118,34 @@ export default function Home() {
   }
 
   const DeleteTask = async(id) =>{
-    const response = await fetch('https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/DeleteTask/${editId}/', {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const url = `https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/DeleteTask/${id}/`;
+   
+    try {
+    const response = await fetch(url, {
       method: "DELETE",
-    })
+      headers: headers //authorization header
+    });
+
     if (response.ok){
       console.log("DELETED ")
       fetchData()
     }else{
-      console.log("Error")
+      console.log("Error deleting task:", response.status);
     }
-  } 
+  } catch(error){
+    console.error("Failed to delete task:", error);
+  }
+};
+
+const handleLogout = () =>{
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  setData([]);
+  console.log("Logged Out");
+}
 
   return (
     <main className="">

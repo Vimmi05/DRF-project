@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'Website',
     'rest_framework',
     'corsheaders',
+    'rest_framework_simplejwt',
 ]
 
 SESSION_COOKIE_AGE = 28800
@@ -67,6 +68,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://9000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev",
     "http://localhost:3000",
 ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -77,6 +79,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES' : (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 CORS_ALLOW_HEADERS = [
     'accept',

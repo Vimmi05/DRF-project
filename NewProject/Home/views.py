@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from Home.models import * 
 from Home.serializers import StudentSerializer
+from rest_framework.permissions import IsAuthenticated
 
 def Index(request):
     return render (request, "Home/home.html")
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def Home(request):
     data = Student.objects.all()
     print("data : ", data)
@@ -19,7 +21,8 @@ def Home(request):
 
 
 # Create
-@api_view(['POST']) #checking if request.method == POST by self, no need to explictly mention that
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def createStudentApiView(request):
     # how to get data from frontend
     data = request.data #json format
@@ -41,6 +44,7 @@ def createStudentApiView(request):
 
 #UPDATE
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def updateStudentApiView(request, id):
     student = Student.objects.get(id=id)
     data = request.data
@@ -61,6 +65,7 @@ def updateStudentApiView(request, id):
         )
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getStudentApiView(request, id):
     student = Student.objects.get(id=id)
     serData = StudentSerializer(student)
@@ -69,6 +74,7 @@ def getStudentApiView(request, id):
     }, status=200)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def deleteStudentApiView(request, id):
     student = Student.objects.get(id=id)
     student.delete()
