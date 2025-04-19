@@ -6,5 +6,5 @@ urlpatterns = [
     path('CreateTask/', views.CreateTask, name="create_task"),
     path('GetTask/', views.GetTask, name="get_task"),
     path('UpdateTask/<int:id>/', views.UpdateTask, name="update_task"),
-    path('Deletetask/<int:id>/', views.DeleteTask, name="delete_task")
+    path('DeleteTask/<int:id>/', views.DeleteTask, name="delete_task")
 ]   

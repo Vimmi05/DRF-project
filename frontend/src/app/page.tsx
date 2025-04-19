@@ -1,186 +1,115 @@
 'use client'
-import { error } from 'console';
-import React, { useState, useEffect } from 'react'
-import LoginForm from './login/page';
+import React, { useState, useEffect} from 'react';
 
-const handleLogin = async (username, password) => {
-  setIsLoggingIn(true); // Start loading
-  setLoginError(null);  // Clear previous errors
-  try {
-      const response = await fetch('YOUR_API_TOKEN_URL', { /* ... */ });
-      // ... (rest of your existing login logic) ...
-      if (!response.ok) {
-           const errorText = await response.text(); // Get error details if possible
-           throw new Error(`Login failed: ${response.status} ${errorText || ''}`);
-      }
-      const tokens = await response.json();
-      localStorage.setItem('accessToken', tokens.access);
-      localStorage.setItem('refreshToken', tokens.refresh);
-      console.log('Login successful!');
-      // --- Trigger state update to reflect logged-in status ---
-      // For example, set an isLoggedIn state: setIsLoggedIn(true);
-      fetchData(); // Fetch data after successful login
-  } catch (error) {
-      console.error('Error during login:', error);
-      setLoginError(error.message); // Set error message to display
-      // --- Re-throw the error so the LoginForm can catch it too ---
-      throw error;
-  } finally {
-      setIsLoggingIn(false); // Stop loading regardless of outcome
-  }
-};
-const getAuthHeaders = () => {
-  const accessToken = localStorage.getItem('accessToken');
-  if(!accessToken){
-    console.warn("No access token found");
-    return null;
-  }
-  return{
-    'Content-type':'application/json',
-    'Authorization': `Bearer ${accessToken}`
-  };
-};
-
-export default function Home() {
+export default function Home(){
   const [data, setData] = useState([]);
-  const [task, setTask] = useState("");
+  const [task, setTask] = useState([]);
   const [editId, setEditId] = useState(null);
 
-  const fetchData = async () => {
-    const headers = getAuthHeaders();
-    if(!headers) return; // dont fetch if not logged in
-    try{
-    const response = await fetch('https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/GetTask/',{
-      method: "GET",
-      headers: headers,
-    });
+    const fetchData = async () => {
+      const response = await fetch('http://127.0.0.1:8000/Website/GetTask/');
 
-    if (!response.ok) {
-      console.log('HTTP Error fetching data:', response.status);
-    
-    if( response.status === 401){
-      console.log("Token might be expired, attempt refresh?");//refreshToken
+      if(!response.ok){
+        console.log("HTTP Error...")
+      }else{
+        const result = await response.json()
+        console.log("Running...", result)
+        setData(result.data);
+      }
     }
-    throw new Error('HTTP error! status: ${response.status}');
-  } else {
-      const result = await response.json()
-      console.log('Running : ', result)
-      setData(result.data); //data from backend
-    }
-  } catch(error){
-    console.error("Failed to fetch data:", error);
-  }
-  };
 
   useEffect(() => {
     fetchData()
   }, [])
 
   console.log("Value : ", task)
-  const createOrUpdateRecord = async (e) => {
-    e.preventDefault();
-    const headers = getAuthHeaders();
-  if (!headers) return; // Don't proceed if not logged in
-  const payload = { task : task};
 
-      let url = 'https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/CreateTask/';
-      let method = 'POST'
-
-      if(editId){
-        url = `https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/UpdateTask/${editId}/`
-        method = 'PUT'
-      }
-      try{
-      const response = await fetch('url', {
-        method: method,
-        headers: headers,
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok){
-        const res = await response.json()
-        console.log("Response : ", res)
-        setTask('')
-        setEditId(null);
-        fetchData();
-      }else{
-        console.error("Error creating/updating record:", response.status);
-      }
-    } catch(error){
-      console.log("Error : ", error)
+  const CreateOrUpdateRecord = async (e) => {
+    e.preventDefault()
+    const data = {
+    task : task
+     }
+    try {
+    let url = 'http://127.0.0.1:8000/Website/CreateTask/';
+    let method = "POST";
+    
+    if(editId){
+    url = `http://127.0.0.1:8000/Website/UpdateTask/${editId}/`;
+    method = "PUT";
     }
-  };
-
+    const response = await fetch(url, {
+    method: method,
+    headers: {
+       'Content-Type':"application/json",
+    },
+    body: JSON.stringify(data)
+    })
+    if(response.ok){
+    const result = await response.json(); // Parse JSON on success
+    console.log("Task Created/Updated successfully:", result);
+    setTask("");
+    setEditId(null); // Reset editId after successful update
+    fetchData(); // Refresh the task list
+    }
+    else {
+    // Handle error responses
+    const errorResult = await response.json(); // Try to parse JSON error
+    console.error("Failed to create/update task:", response.status, errorResult);
+    // Optionally, display an error message to the user
+     }
+    } catch(error){
+    console.error("Error during request:", error);
+    }
+    }
 
   const handleEdit = (record) => {
     setTask(record.task);
-    setEditId(record.id);
+    setEditId(record.id)
   }
 
-  const DeleteTask = async(id) =>{
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
-    const url = `https://8000-idx-django-project-1744361696364.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/Website/DeleteTask/${id}/`;
-   
-    try {
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: headers //authorization header
-    });
-
-    if (response.ok){
-      console.log("DELETED ")
-      fetchData()
+  const DeleteTask = async (id) => {
+    const response = await fetch(`http://127.0.0.1:8000/Website/DeleteTask/${id}/`,{
+    method: "DELETE",
+    })
+     if(response.ok){
+    console.log("DELETED....")
+    fetchData();
     }else{
-      console.log("Error deleting task:", response.status);
+    console.log("Deletion Failed...")
     }
-  } catch(error){
-    console.error("Failed to delete task:", error);
-  }
-};
-
-const handleLogout = () =>{
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  setData([]);
-  console.log("Logged Out");
-}
-
+    }
+  
   return (
-    <main className="">
-      <h1 className="text-4xl font-extrabold tracking-wide text-center pt-5 mb-3"> Todo App </h1>
-      
-      <form onSubmit={createOrUpdateRecord} style={{display: "flex", justifyContent:"space-evenly", width:"80%", margin:"auto auto"}}>
-        <input type="text" value={task} onChange={(e) => setTask(e.target.value)} placeholder="Enter Task" className='rounded border px-16 p-2'
-        style={{width: "80%"}}/>
-        <button type="submit">{editId ? "Update Task" : "Create Task"}</button>
-      </form>
-      <h2  className="text-2xl font-extrabold tracking-wide text-center pt-5 mb-3">All Tasks</h2>
-      <table className="border-collapse border mt-5 border-gray-400 ..." style={{ width: "80%", margin: "auto auto"}}>
-        <thead>
-          <tr>
-            <th className="border border-gray-300 text-xl p-3">Sr. No.</th>
-            <th className="border border-gray-300 text-xl p-3">Task</th>
-            <th className="border border-gray-300 text-xl p-3">Created At</th>
-            <th className="border border-gray-300 text-xl p-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-
-        {data && data.map((record, index) => (
-          <tr key={record}>
-            <td className="border border-gray-300 px-3 p-2">{index+1}</td>
-            <td className="border border-gray-300 px-3 p-2">{record.task}</td>
-            <td className="border border-gray-300 px-3 p-2">{record.created_date}</td>
-            <td className="border border-gray-300 px-3 p-2">
-              <button onClick={()=> handleEdit(record)}>Edit</button>
-              <button className='ml-5' onClick={()=> DeleteTask(record)}>Delete</button>
-            </td>
-          </tr>
-      ))}
-      </tbody>
-      </table>
-    </main>
+    <main>
+            <h1 className="text-4xl font-extrabold tracking-wide text-center pt-5 mb-3"> Todo App </h1>
+            <form onSubmit={CreateOrUpdateRecord} style={{display: "flex", justifyContent: "space-evenly", width: "80%", margin: "auto auto"}}>
+              <input type="text" value={task} onChange={(e) => setTask(e.target.value)} placeholder='Enter Task' className='rounded border px-16 p-2' style={{ width: "80%" }}/>
+              <button type="submit" >{editId ? "Update Task" : "Create Task" }</button>
+            </form>
+            <h2 className="text-2xl font-extrabold tracking-wide text-center pt-5 mt-5 mb-3">All Tasks</h2>
+            <table className="border-collapse border mt-5 border-gray-400" style={{ width: "80%", margin: "auto auto"}}>
+                <thead>
+                    <tr>
+                        <th className="border border-gray-300 text-xl p-3">Sr. No.</th>
+                        <th className="border border-gray-300 text-xl p-3">Task</th>
+                        <th className="border border-gray-300 text-xl p-3">Created At</th>
+                        <th className="border border-gray-300 text-xl p-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data && data.map((record, index) => (
+                        <tr key={record}>
+                            <td className="border border-gray-300 px-3 p-2">{index + 1}</td>
+                            <td className="border border-gray-300 px-3 p-2">{record.task}</td>
+                            <td className="border border-gray-300 px-3 p-2">{record.created_at}</td>
+                            <td className="border border-gray-300 px-3 p-2">
+                              <button onClick={() => handleEdit(record)}>Edit</button> |
+                              <button onClick={() => DeleteTask(record.id)}> Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </main>
   );
 }

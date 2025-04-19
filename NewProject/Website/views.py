@@ -17,16 +17,28 @@ def GetTask(request):
     data = serData.data
     return Response({"data":data}, status=200)
 
+# @api_view(['POST'])
+# def CreateTask(request):
+#     serData = TaskSerializer(data = request.data)
+
+#     if serData.is_valid():
+#         serData.save()
+#         return Response({"status":"created"}, status=200)
+#     else:
+#         return Response({"status ": f"Failed {serData.errors}"}, status=400)
+
 @api_view(['POST'])
 def CreateTask(request):
-    data =  TaskModel.objects.all()
-    serData = TaskSerializer(data, many=True)
-
-    if serData.is_valid():
-        serData.save()
-        return Response({"status":"created"}, status=200)
-    else:
-        return Response({"status ": f"Failed {serData.errors}"}, status=400)
+    serData = TaskSerializer(data=request.data)
+    try:
+        if serData.is_valid():
+            serData.save()
+            return Response({"status": "created"}, status=200)
+        else:
+            return Response({"status ": f"Failed {serData.errors}"}, status=400)
+    except Exception as e:
+        print(f"Error during CreateTask: {e}")  # Log the error to your console
+        return Response({"status ": f"Internal Server Error: {e}"}, status=500)
 
 @api_view(['PUT'])
 def UpdateTask(request, id):
